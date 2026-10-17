@@ -21,7 +21,7 @@ function validate(raw){
  if(typeof raw.sandwichUnlocked!=="boolean"||raw.history.length!==raw.month-1)throw Error("保存内容の整合性が不正です。");
  const products={};
  for(const id of Object.keys(CATALOG)){const p=raw.products[id];if(!p)throw Error("商品の保存内容がありません。");products[id]={price:integer(p.price,"price",1,RULES.maxPrice),inventory:integer(p.inventory,"inventory",0,1e7)};}
- const history=raw.history.map(h=>{if(!h)throw Error("履歴の形式が不正です。");for(const key of ["month","revenue","profit","cash","sold"])integer(h[key],"history."+key,-1e12,1e12);return {month:h.month,revenue:h.revenue,profit:h.profit,cash:h.cash,sold:h.sold};});
+ const history=raw.history.map((h,i)=>{if(!h)throw Error("履歴の形式が不正です。");integer(h.month,"month",1,120);integer(h.revenue,"revenue",0,1e12);integer(h.profit,"profit",-1e12,1e12);integer(h.cash,"cash",0,1e12);integer(h.sold,"sold",0,1e12);if(h.month!==i+1)throw Error("履歴の月が不連続です。");return {month:h.month,revenue:h.revenue,profit:h.profit,cash:h.cash,sold:h.sold};});
  return {version:VERSION,seed:raw.seed,month:raw.month,cash:raw.cash,debt:raw.debt,employees:raw.employees,equipment:raw.equipment,quality:raw.quality,sandwichUnlocked:raw.sandwichUnlocked,products,history};
 }
 function noise(seed,month,id,salt){let n=(seed^Math.imul(month,0x9e3779b1)^salt)>>>0;for(const c of id){n^=c.charCodeAt(0);n=Math.imul(n,16777619)>>>0;}n^=n>>>16;n=Math.imul(n,0x7feb352d);n^=n>>>15;n=Math.imul(n,0x846ca68b);n^=n>>>16;return(n>>>0)/4294967296;}
@@ -97,7 +97,7 @@ function nextMonth(raw,rawPlan){
  if(missed>0)report.notes.push("商品・在庫・販売能力の制約で販売機会を逃しました。");
  if(result.debt>0)report.notes.push("借入には毎月の利息がかかります。");
  if(profit<0)report.notes.push("今月は赤字でした。価格・費用・仕入れを見直してください。");
- if(result.cash<costs.rent+p.employees*costs.wages/Math.max(1,p.employees))report.notes.push("翌月の固定費に対して手元資金が少なくなっています。");
+ if(result.cash<costs.rent+costs.wages)report.notes.push("翌月の固定費に対して手元資金が少なくなっています。");
  result.history.push({month:s.month,revenue,profit,cash:result.cash,sold:soldCount});result.month++;
  return {state:validate(result),report};
 }
