@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none';script-src 'self';style-src 'self';connect-src 'none';img-src 'self' data:;object-src 'none';base-uri 'none'">
+<title>小さなお店の経営 — 価格と在庫の戦略</title>
+<link rel="stylesheet" href="./styles.css"><script defer src="./src/economy.js"></script><script defer src="./src/app.js"></script></head>
+<body><main class="shell">
+<header><p class="eyebrow">SMALL BUSINESS SIMULATOR / OFFLINE</p><h1>あなたの値付けが、<br><span>お店の未来を変える。</span></h1>
+<p class="lead">高く売れば利益は増える？ 値段を下げればお客さんが増える？ 仕入れと人手も考えながら、1店舗から会社を育てよう。</p><span class="dev">開発版 / 販売HOLD</span></header>
+<section class="stats" aria-label="会社の現状"><div><small>営業月</small><strong id="month">1</strong></div><div><small>現金</small><strong id="cash">—</strong></div><div><small>借入残高</small><strong id="debt">—</strong></div><div><small>従業員</small><strong id="headcount">—</strong></div></section>
+<p id="message" class="message" role="status">まずはコーヒーの値段と仕入れを決めましょう。</p>
+<section class="panel"><div class="step"><span>1</span><div><h2>商品と価格を決める</h2><p>価格を変えると予想のお客さんの数も変わります。</p></div></div>
+<div id="products" class="products"></div><label id="unlockBox" class="unlock" hidden><input type="checkbox" id="unlockSandwich"> 新商品「サンドイッチ」の販売を始める（準備費 180,000円）</label></section>
+<section class="panel"><div class="step"><span>2</span><div><h2>お店の運営を決める</h2><p>人手・広告・借入と投資。初めは今の設定のままでも遊べます。</p></div></div>
+<div class="controls"><label>従業員数<input id="employees" type="number" min="0" max="10" step="1"></label>
+<label>今月の広告費（円）<input id="advertising" type="number" min="0" max="300000" step="1000"></label></div>
+<details class="advanced"><summary>設備・品質投資、借入・返済（高度な設定）</summary>
+<div class="controls"><label>借入額（円）<input id="borrow" type="number" min="0" max="2500000" step="10000"></label>
+<label>返済額（円）<input id="repay" type="number" min="0" max="2500000" step="10000"></label></div>
+<label class="tick"><input type="checkbox" id="equipmentUpgrade"> 設備を拡張（260,000円）</label>
+<label class="tick"><input type="checkbox" id="qualityUpgrade"> 品質を改善（150,000円）</label></details></section>
+<section class="panel action"><div class="step"><span>3</span><div><h2>この計画で1か月営業する</h2><p>売上と利益、売れ残りを確認して次の手を考えましょう。</p></div></div>
+<div id="preflight" class="preflight" role="status">計画を入力してください。</div>
+<button id="advance" class="primary" type="button">この計画で1か月進める →</button></section>
+<section class="panel"><h2>経営の結果</h2><div id="results" class="results"><p>まだ営業していません。</p></div></section>
+<details class="settings"><summary>経営履歴・セーブの管理（詳細）</summary><div class="inside">
+<div id="history" class="history"></div><div class="tools"><button id="export">セーブ書き出し</button><button id="import">セーブ読込</button><button id="reset" class="danger">初めからやり直す</button><input id="savefile" type="file" accept=".json,application/json" hidden></div>
+<p>オフラインで動作し、セーブは端末内に保存します。元のセーブが壊れている場合、確認なしに上書きしません。</p></div></details>
+<footer>登場人物・商品・数値は架空です。経済学の指標は内部で計算し、ゲーム画面には経営上の結果のみ表示します。</footer></main></body></html>
