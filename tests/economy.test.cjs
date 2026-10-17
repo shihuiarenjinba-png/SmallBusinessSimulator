@@ -71,3 +71,11 @@ test("long-run seed replay and cash conservation stay valid",()=>{
   }
  }
 });
+
+test("tampered monthly sales history cannot be restored",()=>{
+ const state=E.nextMonth(E.createInitialState(),E.defaultPlan(E.createInitialState())).state;
+ const negative=JSON.parse(JSON.stringify(state));negative.history[0].sold=-1;
+ assert.throws(()=>E.validateState(negative),/sold/);
+ const shifted=JSON.parse(JSON.stringify(state));shifted.history[0].month=7;
+ assert.throws(()=>E.validateState(shifted),/不連続/);
+});
