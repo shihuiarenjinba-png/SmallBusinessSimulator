@@ -28,8 +28,8 @@ test("only one real operation screen remains visible and all input controls keep
   assert.equal(visible.length,name==="run"?2:name==="history"?0:1);
   assert.equal(details.hidden,name!=="history");
  }
- assert.equal(buttons.length,names.length);
- assert.equal(buttons.filter(b=>b.attrs["aria-selected"]==="true").length,1);
+ assert.equal(buttons.filter(b=>b.dataset.operationTab).length,names.length);
+ assert.equal(buttons.filter(b=>b.dataset.operationTab&&b.attrs["aria-selected"]==="true").length,1);
  assert.equal(win.OperationTabs.open("not-real"),false);
 });
 test("tabs use intact game buttons, do not alter saved simulation and script exists in HTML",()=>{
