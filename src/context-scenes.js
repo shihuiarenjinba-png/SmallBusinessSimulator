@@ -19,7 +19,12 @@ function build(){
    const words=document.createElement("div");words.className="context-description";
    const heading=document.createElement("h3");heading.textContent=title;
    const explainer=document.createElement("p");explainer.textContent=description;
-   words.append(heading,explainer);figure.append(illustration,words);panel.insertBefore(figure,panel.firstChild);
+   words.append(heading,explainer);figure.append(illustration,words);
+   if(panel.tagName==="DETAILS"){
+    // The actual <summary> must stay first in the details element for native toggling.
+    const summary=panel.querySelector("summary");
+    if(summary)summary.insertAdjacentElement("afterend",figure);else panel.append(figure);
+   }else panel.insertBefore(figure,panel.firstChild);
    scenes.push(figure);
  }
  const staffControl=$(theme==="small"?"employees":theme==="factory"?"workers":null);
