@@ -15,3 +15,14 @@
 .demand-bars strong{font-size:13px;color:#f4d8aa}
 .demand-bars .stock-advice{font-size:12px;line-height:1.7;color:#e1eae6;margin:5px 0 0}
 .demand-bars progress,.demand-meter{display:none}
+
+
+/* Separate real operation screens, never separate game states. */
+.operation-tabs{display:flex;gap:7px;overflow-x:auto;position:sticky;top:0;z-index:20;
+  border:1px solid #536f80;border-radius:12px;background:#192b37;padding:8px;margin:16px 0}
+.operation-tabs button{white-space:nowrap;min-height:44px;flex:1 0 auto;padding:10px 14px;border-radius:8px;
+  border:1px solid #5d7284;background:#243d47;color:#f0f4f1;font-weight:700;cursor:pointer}
+.operation-tabs button[aria-selected="true"]{background:#e6c88d;color:#243034;border-color:#fff0bc}
+.operation-tabs button:focus-visible{outline:3px solid #ffdf9d;outline-offset:2px}
+[data-operation-screen][hidden]{display:none!important}
+@media(max-width:680px){.operation-tabs button{flex:0 0 auto;padding:9px 12px;font-size:12px}}
