@@ -9,3 +9,9 @@
 .demand-meter progress{display:block;width:100%;height:16px;margin-top:5px;accent-color:#88b4a2}
 .demand-meter.supply progress{accent-color:#e8bc80}
 .demand-bars p{margin:7px 0 0;font-size:12px;color:#d0e0db;line-height:1.5}
+
+/* Compact planning cue: numbers stay actionable without an always-on chart. */
+.demand-bars{border-left:3px solid #e8c48c;padding:11px 13px;background:#283b42}
+.demand-bars strong{font-size:13px;color:#f4d8aa}
+.demand-bars .stock-advice{font-size:12px;line-height:1.7;color:#e1eae6;margin:5px 0 0}
+.demand-bars progress,.demand-meter{display:none}
