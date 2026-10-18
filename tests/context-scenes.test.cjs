@@ -6,6 +6,8 @@ test("context scenes load from local files without external assets",()=>{
  assert.match(html,/context-scenes\.css/);assert.match(html,/src\/context-scenes\.js/);
  assert.ok(html.indexOf('src/operation-tabs.js')<html.indexOf('src/context-scenes.js'));
  assert.doesNotMatch(source,/\bfetch\(|XMLHttpRequest|http:\/\/|https:\/\/|localStorage|sessionStorage/);
+ assert.match(source,/panel\.tagName==="DETAILS"/);
+ assert.match(source,/summary\.insertAdjacentElement\("afterend",figure\)/);
  assert.doesNotThrow(()=>new vm.Script(source));
 });
 test("only the intended screens receive distinct visual headers",()=>{
