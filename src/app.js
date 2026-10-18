@@ -31,7 +31,7 @@ function products(){
    inputs.append(makeField(id+"Price","店頭の販売価格（円）",state.products[id].price,1,E.RULES.maxPrice));
    inputs.append(makeField(id+"Order","今月の仕入数（個）",id==="coffee"?700:0,0,E.RULES.maxPurchase));
    card.append(inputs);
-   const forecast=element("p",undefined,"forecast");forecast.id=id+"Forecast";card.append(forecast);dest.append(card);
+   const forecast=element("p",undefined,"forecast");forecast.id=id+"Forecast";const bars=element("div",undefined,"demand-bars");bars.id=id+"DemandBars";card.append(forecast,bars);dest.append(card);
  }
  $("unlockBox").hidden=state.sandwichUnlocked||state.month<4;
  $("unlockSandwich").checked=false;
@@ -61,6 +61,25 @@ function results(){const root=$("results");root.replaceChildren();if(!latest){ro
  for(const d of Object.values(latest.byProduct)){root.append(element("p",d.name+"：希望 "+d.demanded+"個 / 販売 "+d.sold+"個 / 残り "+d.remaining+"個。競合店の価格目安 "+yen(d.competitorPrice),"muted"));}
  latest.notes.forEach(n=>root.append(element("p",n,"result-note")));
 }
+
+function demandBars(id,forecast,planned){
+ const node=$(id+"DemandBars");node.replaceChildren();
+ const supply=state.products[id].inventory+planned.products[id].order;
+ const max=Math.max(1,supply,forecast.expected);
+ for(const [title,value,type] of [["需要の予想",forecast.expected,"demand"],
+    ["在庫＋今回の仕入",supply,"supply"]]){
+   const wrap=element("div",undefined,"demand-meter "+type);
+   const label=element("div",undefined,"demand-meter-header");
+   label.append(element("span",title),element("strong",value.toLocaleString("ja-JP")+"個"));
+   const meter=element("progress");meter.max=max;meter.value=value;meter.setAttribute("aria-label",title+" "+value+"個");
+   wrap.append(label,meter);node.append(wrap);
+ }
+ const note=forecast.expected>supply?
+   "需要予想に対して品物が不足する可能性があります。仕入費用と人員も確認しましょう。":
+   "在庫に余裕があります。売れ残りの費用と値付けにも気をつけましょう。";
+ node.append(element("p",note+" ※予想であり、売上・販売数の保証ではありません。"));
+}
+
 function preflight(){if(recoveryBlocked){$("preflight").textContent="セーブ復元が必要です。元データを退避するか、明示的に新規開始してください。";$("advance").disabled=true;return;}
  if(state.month>120){$("preflight").textContent="120か月の経営を完走しました。";$("advance").disabled=true;return;}
  try{
@@ -72,6 +91,7 @@ function preflight(){if(recoveryBlocked){$("preflight").textContent="セーブ�
      if(id==="sandwich"&&!state.sandwichUnlocked&&!p.unlockSandwich)continue;
      const f=E.forecast(state,id,p.products[id].price,p.advertising,state.quality+Number(p.qualityUpgrade));
      $(id+"Forecast").textContent="この価格の需要予想："+f.expected+"個（販売は在庫と従業員数が上限）。競合店の参考価格 "+yen(f.competitor)+"。";
+     demandBars(id,f,p);
    }
  }catch(e){$("preflight").textContent=e.message;$("advance").disabled=true;}
 }
