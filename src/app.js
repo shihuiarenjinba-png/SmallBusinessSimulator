@@ -15,7 +15,7 @@ function plan(){return {products:{
  employees:numeric("employees"),advertising:numeric("advertising"),
  borrow:numeric("borrow"),repay:numeric("repay"),
  equipmentUpgrade:$("equipmentUpgrade").checked,
- qualityUpgrade:$("qualityUpgrade").checked,
+ qualityUpgrade:$("qualityUpgrade").checked,staffTraining:$("staffTraining").checked,
  unlockSandwich:$("unlockSandwich").checked};}
 function makeField(id,label,value,min,max){
  const holder=element("label",label);const input=element("input");
@@ -39,11 +39,12 @@ function products(){
 }
 function showSandwich(){const enabled=state.sandwichUnlocked||$("unlockSandwich").checked;$("sandwichCard").hidden=!enabled;}
 function populate(){const p=E.defaultPlan(state);$("employees").value=String(p.employees);$("advertising").value=String(p.advertising);
- $("borrow").value="0";$("repay").value="0";$("equipmentUpgrade").checked=false;$("qualityUpgrade").checked=false;
+ $("borrow").value="0";$("repay").value="0";$("equipmentUpgrade").checked=false;$("qualityUpgrade").checked=false;$("staffTraining").checked=false;$("staffTraining").disabled=state.month<6||state.staffSkill>=4||state.employees<1;
  products();}
 function renderStats(){
  $("month").textContent=state.month>120?"完走":state.month+"か月目";
  $("cash").textContent=yen(state.cash);$("debt").textContent=yen(state.debt);$("headcount").textContent=state.employees+"人";
+ $("staffProgress").textContent="従業員育成 "+state.staffSkill+" / 4 ｜ 研修は6か月目から（85,000円）";
  $("message").textContent=notice|| (state.month<=3?"まずは商品の価格と仕入れを決めましょう。":
    state.month===4&&!state.sandwichUnlocked?"新しい商品を扱うか、お店を磨くかを選びましょう。":
    "価格・仕入・人員を調整しながら成長を目指しましょう。");
