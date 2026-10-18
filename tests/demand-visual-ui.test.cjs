@@ -6,5 +6,5 @@ test("forecast bars compare real supply and forecast, with no sales guarantee",(
  assert.match(app,/state\.products\[id\]\.inventory\+planned\.products\[id\]\.order/);
  assert.match(app,/demandBars\(id,f,p\)/);
  assert.match(app,/売上・販売数の保証ではありません/);
- assert.match(css,/\.demand-meter progress/);
+ assert.match(app,/在庫不足の可能性|売れ残りの可能性/);
 });
