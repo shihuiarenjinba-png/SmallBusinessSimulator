@@ -26,3 +26,8 @@
 .operation-tabs button:focus-visible{outline:3px solid #ffdf9d;outline-offset:2px}
 [data-operation-screen][hidden]{display:none!important}
 @media(max-width:680px){.operation-tabs button{flex:0 0 auto;padding:9px 12px;font-size:12px}}
+
+.operation-next{margin:15px 0 1px;padding-top:13px;border-top:1px solid #65726f;display:flex;justify-content:flex-end}
+.operation-next-button{min-height:45px;padding:10px 18px;border:1px solid #deb777;border-radius:9px;background:#dfc28b;color:#20313a;font-weight:800;cursor:pointer}
+.operation-next-button:hover{background:#f8dfad}
+.operation-next-button:focus-visible{outline:3px solid #fff2bc;outline-offset:3px}
