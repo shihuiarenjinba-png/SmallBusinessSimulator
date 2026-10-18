@@ -79,3 +79,22 @@ test("tampered monthly sales history cannot be restored",()=>{
  const shifted=JSON.parse(JSON.stringify(state));shifted.history[0].month=7;
  assert.throws(()=>E.validateState(shifted),/不連続/);
 });
+
+test("staff training costs cash, improves serving capacity and remains compatible with old saves",()=>{
+ let old=E.createInitialState(17),legacy=JSON.parse(JSON.stringify(old));delete legacy.staffSkill;
+ assert.equal(E.validateState(legacy).staffSkill,0);
+ assert.equal(E.validateState(old).staffSkill,0);
+ const before=E.defaultPlan(old);before.staffTraining=true;
+ assert.throws(()=>E.nextMonth(old,before),/6か月目/);
+ for(let i=0;i<5;i++)old=E.nextMonth(old,E.defaultPlan(old)).state;
+ const withTraining=E.defaultPlan(old);withTraining.staffTraining=true;
+ const trained=E.nextMonth(old,withTraining),untrained=E.nextMonth(old,E.defaultPlan(old));
+ assert.equal(trained.state.staffSkill,1);
+ assert.equal(trained.report.costs.training,85000);
+ assert.equal(trained.report.capacity-untrained.report.capacity,125*old.employees);
+ assert.equal(trained.state.cash,old.cash+trained.report.cashFlow);
+ assert.equal(trained.report.profit,trained.report.revenue-trained.report.costs.costOfGoodsSold-
+ trained.report.costs.wages-trained.report.costs.rent-trained.report.costs.advertising-
+ trained.report.costs.interest-trained.report.costs.hiring-trained.report.costs.training);
+ assert.equal(old.staffSkill,0);
+});
