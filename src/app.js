@@ -65,21 +65,16 @@ function results(){const root=$("results");root.replaceChildren();if(!latest){ro
 function demandBars(id,forecast,planned){
  const node=$(id+"DemandBars");node.replaceChildren();
  const supply=state.products[id].inventory+planned.products[id].order;
- const max=Math.max(1,supply,forecast.expected);
- for(const [title,value,type] of [["需要の予想",forecast.expected,"demand"],
-    ["在庫＋今回の仕入",supply,"supply"]]){
-   const wrap=element("div",undefined,"demand-meter "+type);
-   const label=element("div",undefined,"demand-meter-header");
-   label.append(element("span",title),element("strong",value.toLocaleString("ja-JP")+"個"));
-   const meter=element("progress");meter.max=max;meter.value=value;meter.setAttribute("aria-label",title+" "+value+"個");
-   wrap.append(label,meter);node.append(wrap);
- }
- const note=forecast.expected>supply?
-   "需要予想に対して品物が不足する可能性があります。仕入費用と人員も確認しましょう。":
-   "在庫に余裕があります。売れ残りの費用と値付けにも気をつけましょう。";
- node.append(element("p",note+" ※予想であり、売上・販売数の保証ではありません。"));
+ const diff=forecast.expected-supply;
+ const title=diff>0?"在庫不足の可能性":diff<0?"売れ残りの可能性":"需要と在庫は同程度";
+ node.append(element("strong",title),
+  element("p","予想需要 "+forecast.expected.toLocaleString("ja-JP")+"個 ｜ 仕入後の在庫 "+
+    supply.toLocaleString("ja-JP")+"個。"+
+    (diff>0?"不足目安 "+diff+"個。仕入・人手・現金を見直しましょう。":
+     diff<0?"余剰目安 "+(-diff)+"個。値付けと保管費用を確認しましょう。":
+     "販売数は従業員・実際の需要によって変わります。")+
+    " ※販売数の保証ではありません。","stock-advice"));
 }
-
 function preflight(){if(recoveryBlocked){$("preflight").textContent="セーブ復元が必要です。元データを退避するか、明示的に新規開始してください。";$("advance").disabled=true;return;}
  if(state.month>120){$("preflight").textContent="120か月の経営を完走しました。";$("advance").disabled=true;return;}
  try{
