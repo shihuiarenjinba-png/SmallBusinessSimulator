@@ -80,64 +80,96 @@ function showHistory(){const root=$("history");root.replaceChildren();
  for(const h of state.history.slice(-12).reverse())root.append(element("div",h.month+"か月目 ｜ 売上 "+yen(h.revenue)+" ｜ 利益 "+yen(h.profit)+" ｜ 現金 "+yen(h.cash),"record"));
  if(!state.history.length)root.append(element("p","営業すると月次記録がここに残ります。","muted"));
 }
-function results(){const root=$("results");root.replaceChildren();if(!latest){root.append(element("p","価格・仕入・運営を決めて最初の1か月を始めましょう。","muted"));return;}
+function results(){
+ const root=$("results");root.replaceChildren();
+ if(!latest){root.append(element("p",daily()?"在庫・値引き・入庫を決めて1日進めてください。":"価格・仕入・運営を決めて1か月進めてください。","muted"));return;}
  const grid=element("div",undefined,"result-grid");
- for(const [label,value] of [["売上",yen(latest.revenue)],["営業利益",yen(latest.profit)],["販売数",latest.sold+"個"],["売り逃した数",latest.missed+"個"]]){
-   const card=element("div",undefined,"result-cell");card.append(element("small",label),element("strong",value));grid.append(card);
+ const metrics=[["売上",yen(latest.revenue)],["営業利益",yen(latest.profit)],["販売数",latest.sold+"個"],["販売機会の損失",latest.missed+"個"]];
+ if(daily())metrics.push(["期限切れ廃棄",latest.expired+"個"],["値引き販売",latest.discounted+"個"],["本日の入庫",latest.received+"個"]);
+ for(const [label,value] of metrics){
+  const card=element("div",undefined,"result-cell");card.append(element("small",label),element("strong",value));grid.append(card);
  }root.append(grid);
- for(const d of Object.values(latest.byProduct)){root.append(element("p",d.name+"：希望 "+d.demanded+"個 / 販売 "+d.sold+"個 / 残り "+d.remaining+"個。競合店の価格目安 "+yen(d.competitorPrice),"muted"));}
- latest.notes.forEach(n=>root.append(element("p",n,"result-note")));
+ for(const detail of Object.values(latest.byProduct)){
+  const line=daily()?
+   detail.name+"：需要 "+detail.demanded+"個 / 販売 "+detail.sold+"個 / 入庫 "+detail.order+"個 / 残り "+detail.remaining+
+   "個 / 期限切れ "+detail.expired+"個 / 値引き販売 "+detail.discounted+"個":
+   detail.name+"：希望 "+detail.demanded+"個 / 販売 "+detail.sold+"個 / 残り "+detail.remaining+
+   "個。競合店の参考価格 "+yen(detail.competitorPrice);
+  root.append(element("p",line,"muted"));
+ }
+ for(const msg of (latest.notes||latest.events||[]))root.append(element("p",msg,"result-note"));
+ if(latest.closedMonth)root.append(element("p","30日分の月次決算が確定し、翌月へ進みました。","result-note"));
 }
-
 function demandBars(id,forecast,planned){
  const node=$(id+"DemandBars");node.replaceChildren();
- const supply=state.products[id].inventory+planned.products[id].order;
- const diff=forecast.expected-supply;
- const title=diff>0?"在庫不足の可能性":diff<0?"売れ残りの可能性":"需要と在庫は同程度";
- node.append(element("strong",title),
-  element("p","予想需要 "+forecast.expected.toLocaleString("ja-JP")+"個 ｜ 仕入後の在庫 "+
-    supply.toLocaleString("ja-JP")+"個。"+
-    (diff>0?"不足目安 "+diff+"個。仕入・人手・現金を見直しましょう。":
-     diff<0?"余剰目安 "+(-diff)+"個。値付けと保管費用を確認しましょう。":
-     "販売数は従業員・実際の需要によって変わります。")+
-    " ※販売数の保証ではありません。","stock-advice"));
+ const available=state.products[id].inventory+planned.products[id].order;
+ const expected=daily()?Math.round(forecast.expected/30):forecast.expected;
+ const difference=expected-available;
+ node.append(element("strong",difference>0?"在庫不足の可能性":difference<0?"売れ残りの可能性":"需要と在庫は同程度"),
+ element("p","予想需要 "+expected+"個 / "+(daily()?"日":"月")+" ｜ 仕入後の在庫 "+available+"個。"+
+ (difference>0?"不足目安 "+difference+"個。再入庫や人員・価格を見直しましょう。":
+ difference<0?"余剰目安 "+(-difference)+"個。期限切れ前の割引も検討できます。":"販売数は販売能力によって変わります。")+
+ " ※需要予測であり販売を保証しません。","stock-advice"));
 }
-function preflight(){if(recoveryBlocked){$("preflight").textContent="セーブ復元が必要です。元データを退避するか、明示的に新規開始してください。";$("advance").disabled=true;return;}
+function preflight(){
+ if(recoveryBlocked){$("preflight").textContent="セーブ復元が必要です。元の記録を保護しています。";$("advance").disabled=true;return;}
  if(state.month>120){$("preflight").textContent="120か月の経営を完走しました。";$("advance").disabled=true;return;}
  try{
-   const p=plan(),sim=E.nextMonth(state,p);
-   const costs=sim.report.costs;
-   $("preflight").textContent="今月の仕入 "+yen(costs.procurement)+" ＋ 固定費・広告・投資・返済など "+yen(costs.expense-costs.procurement)+"。営業開始前の残金 "+yen(state.cash+p.borrow-costs.expense)+"。";
-   $("advance").disabled=false;
-   for(const id of Object.keys(E.CATALOG)){
-     if(id==="sandwich"&&!state.sandwichUnlocked&&!p.unlockSandwich)continue;
-     const f=E.forecast(state,id,p.products[id].price,p.advertising,state.quality+Number(p.qualityUpgrade));
-     $(id+"Forecast").textContent="この価格の需要予想："+f.expected+"個（販売は在庫と従業員数が上限）。競合店の参考価格 "+yen(f.competitor)+"。";
-     demandBars(id,f,p);
-   }
+  const p=plan(),costs=daily()?D.quote(state,p):E.nextMonth(state,p).report.costs;
+  $("preflight").textContent=(daily()?"本日":"今月")+"の入庫費 "+yen(costs.procurement)+
+   " ＋ 人件費・家賃・広告・その他 "+yen(costs.expense-costs.procurement)+
+   "。営業前に残る現金 "+yen(state.cash+p.borrow-costs.expense)+"。";
+  $("advance").disabled=false;
+  for(const id of Object.keys(E.CATALOG)){
+   if(id==="sandwich"&&!state.sandwichUnlocked&&!p.unlockSandwich)continue;
+   const forecasts=E.forecast(state,id,p.products[id].price,daily()?Math.min(300000,p.advertising*30):p.advertising,state.quality+Number(p.qualityUpgrade));
+   $(id+"Forecast").textContent="通常価格での需要予想 "+(daily()?Math.round(forecasts.expected/30):forecasts.expected)+
+    "個 / "+(daily()?"日":"月")+"。参考競合価格 "+yen(forecasts.competitor)+"。";
+   demandBars(id,forecasts,p);
+  }
  }catch(e){$("preflight").textContent=e.message;$("advance").disabled=true;}
 }
 function redraw(){renderStats();populate();showHistory();results();preflight();}
-function advance(){try{const output=E.nextMonth(state,plan());state=output.state;latest=output.report;notice=latest.profit>=0?"経営を続けられました。次は価格と仕入を見直しましょう。":"赤字になりました。経費と販売価格を調整してみましょう。";
- persist();redraw();$("results").scrollIntoView({block:"nearest",behavior:"smooth"});}
- catch(e){notice=e.message;renderStats();preflight();}}
+function advance(){
+ try{
+  const wasDaily=daily(),output=wasDaily?D.advance(state,plan()):E.nextMonth(state,plan());
+  state=output.state;latest=output.report;
+  notice=latest.profit>=0?"営業を完了しました。次の値付けと入庫を決めてください。":"赤字です。仕入・値引き・費用を確認してください。";
+  persist();redraw();
+  $("deliveryBelt").dataset.active=String(wasDaily&&latest.received>0);
+  $("deliveryBelt").setAttribute("aria-label",wasDaily&&latest.received>0?"本日"+latest.received+"個入庫しました":"今回の入庫はありません");
+  window.OperationTabs?.open("run");
+  $("results").scrollIntoView({block:"nearest",behavior:"smooth"});
+ }catch(e){notice=e.message;renderStats();preflight();}
+}
 function download(name,text){const url=URL.createObjectURL(new Blob([text],{type:"application/json"})),a=element("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function exportSave(){download(recoveryBlocked?"small-business-unreadable-original.json":"small-business-month-"+state.month+".json",
  recoveryBlocked&&corruptRaw!==null?corruptRaw:JSON.stringify({schema:E.VERSION,state},null,2));}
 async function importSave(file){if(!file)return;try{if(file.size>400000)throw Error("保存ファイルが大きすぎます。");const data=JSON.parse(await file.text());
- if(data.schema!==E.VERSION)throw Error("保存形式が対応していません。");const next=E.validateState(data.state);
+ if(data.schema!==E.VERSION)throw Error("保存形式が対応していません。");
+ const base=E.validateState(data.state),next=data.state.daily?D.restore(base,data.state.daily):base;
  if(!confirm("現在の進行を、このセーブに置き換えますか？"))return;
  state=next;recoveryBlocked=false;corruptRaw=null;latest=null;notice="セーブを復元しました。";persist();redraw();
  }catch(e){alert("セーブ読込失敗："+e.message);}}
 function init(){
  state=load();if(!recoveryBlocked)persist();redraw();
- document.addEventListener("input",event=>{if(event.target.matches("input"))preflight();});
+ document.addEventListener("input",event=>{if(event.target.matches("input,select"))preflight();});
  document.addEventListener("change",event=>{if(event.target.id==="unlockSandwich")showSandwich();if(event.target.matches("input"))preflight();});
  $("advance").addEventListener("click",()=>{if(!recoveryBlocked)advance();});
+ $("migrateDaily").addEventListener("click",()=>{
+  if(recoveryBlocked||daily())return;
+  if(!confirm("旧月次セーブを別領域に保護して、日次の入庫・値引き管理へ切り替えますか？現在庫は新しく入庫したものとして期限を設定します。"))return;
+  try{
+   const raw=localStorage.getItem(KEY);if(raw!==null)localStorage.setItem(BACKUP,raw);
+   const candidate=D.start(state);
+   localStorage.setItem(KEY,JSON.stringify(candidate));state=candidate;latest=null;
+   notice="旧セーブをバックアップし、日次営業に切り替えました。";redraw();
+  }catch(e){notice=e.message;renderStats();}
+ });
  $("export").addEventListener("click",exportSave);$("import").addEventListener("click",()=>$("savefile").click());
  $("savefile").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";void importSave(f);});
  $("reset").addEventListener("click",()=>{if(!confirm(recoveryBlocked?"読込できない元の記録を上書きして新規開始します。先に元データを書き出しましたか？":"現在の進行を消して、初めから始めますか？"))return;
-   recoveryBlocked=false;corruptRaw=null;state=E.createInitialState();latest=null;notice="新しく始めました。";persist();redraw();});
+   recoveryBlocked=false;corruptRaw=null;state=D.start(E.createInitialState());latest=null;notice="新しく始めました。";persist();redraw();});
 }
 document.addEventListener("DOMContentLoaded",init);
 })();
