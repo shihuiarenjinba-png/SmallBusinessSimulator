@@ -56,7 +56,7 @@ test("automatic markdown fee occurs only once in each month and FIFO expiry stay
 });
 test("reserve gate protects money and rejects tampered day, lots and overdraft",()=>{
  const s=D.start(E.initial(17)),p=plan(s);
- p.products.coffee.order=5000;assert.throws(()=>D.advance(s,p),/資金/);
+ p.products.coffee.order=5000;p.equipmentUpgrade=true;assert.throws(()=>D.advance(s,p),/資金/);
  assert.equal(s.products.coffee.inventory,0);
  const a=JSON.parse(JSON.stringify(s));a.daily.day=31;
  assert.throws(()=>D.restore(a,a.daily),/日/);
