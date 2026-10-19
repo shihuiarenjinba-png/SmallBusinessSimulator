@@ -19,3 +19,7 @@
 .daily-migration button{padding:10px 17px;min-height:44px;border:1px solid #b8aa80;background:#e4c994;color:#283034;border-radius:8px;font-weight:800}
 @media(max-width:710px){.delivery-belt{grid-template-columns:1fr}.belt-rail{height:70px}}
 @media(prefers-reduced-motion:reduce){.delivery-belt *{animation:none!important;transition:none!important}}
+
+/* Receipt graphic appears only after a confirmed delivery on the visible results tab. */
+.delivery-belt[hidden]{display:none!important}
+.delivery-belt:not([data-active="true"]) .belt-package{visibility:hidden}
