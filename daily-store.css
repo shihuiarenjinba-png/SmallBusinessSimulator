@@ -1,0 +1,21 @@
+/* Daily restocking / clearance. No external media, paid service, CDN or background requests. */
+.daily-status{padding:11px 16px;border:1px solid #5a9e9a;background:#19383c;color:#e9f6e9;border-radius:10px;font-weight:700}
+.daily-migration,.discount-auto{margin:14px 0;padding:16px;border-radius:12px;border:1px solid #bbac82;background:#27383c}
+.daily-migration p,.discount-auto p{line-height:1.7;font-size:13px}
+.discount-auto h3{margin:0 0 8px}
+.discount-auto label{display:grid;gap:7px;font-weight:700}
+.discount-auto input[type="checkbox"]{width:auto;margin-right:8px}
+.discount-auto select,.product select{min-height:43px;width:100%;padding:9px 12px;border-radius:8px;border:1px solid #8aa39f;background:#152d33;color:#f1f6ef}
+.delivery-belt{display:grid;grid-template-columns:minmax(180px,1fr) 1.2fr;align-items:center;gap:16px;border:1px solid #777e77;background:#263e3d;
+ border-radius:13px;padding:11px 13px;margin:15px 0}
+.delivery-belt p{font-size:12px;line-height:1.65;color:#d4e6d8}
+.belt-rail{position:relative;overflow:hidden;border-radius:10px;height:82px;background:linear-gradient(#c8b59b 0 18%,#6d7d80 19% 80%,#3b4143 81% 100%);border:3px solid #40515c}
+.belt-rail:after{position:absolute;content:"";inset:60% 0 12%;background:repeating-linear-gradient(90deg,#d2c6ab 0 9px,#435058 10px 24px);opacity:.65}
+.belt-package{position:absolute;z-index:2;top:21%;height:35px;width:36px;background:linear-gradient(150deg,#ead7b1,#a88353);
+ border:2px solid #947046;border-radius:4px}
+.belt-package:nth-child(1){left:16%}.belt-package:nth-child(2){left:44%}.belt-package:nth-child(3){left:72%}
+.delivery-belt[data-active="true"] .belt-package{animation:deliveryMove 1.3s ease-in-out 2 alternate}
+@keyframes deliveryMove{0%{transform:translateX(-10px)}100%{transform:translateX(12px)}}
+.daily-migration button{padding:10px 17px;min-height:44px;border:1px solid #b8aa80;background:#e4c994;color:#283034;border-radius:8px;font-weight:800}
+@media(max-width:710px){.delivery-belt{grid-template-columns:1fr}.belt-rail{height:70px}}
+@media(prefers-reduced-motion:reduce){.delivery-belt *{animation:none!important;transition:none!important}}
