@@ -193,5 +193,39 @@ function advance(raw,plan){
  const checked=restore(result,result.daily);
  return {state:checked,report};
 }
-return Object.freeze({DAYS,AUTO_FEE,LIFE,MAX_STOCK,start,restore,defaultPlan,quote,advance});
+function advanceDays(raw,plan,count=7){
+ integer(count,"まとめて進める日数",1,7);
+ let state=restore(raw,raw.daily);
+ const reports=[];
+ const output={byProduct:{},revenue:0,sold:0,missed:0,expired:0,received:0,
+   discounted:0,profit:0,events:[],daysProcessed:0,closedMonth:false};
+ for(let i=0;i<count;i++){
+  const p=copy(plan);
+  if(i){
+   // Purchases and one-time financial/upgrade decisions happen on the first day only.
+   for(const id of IDS)p.products[id].order=0;
+   p.borrow=0;p.repay=0;p.unlockSandwich=false;
+   p.equipmentUpgrade=false;p.qualityUpgrade=false;p.staffTraining=false;
+  }
+  const r=advance(state,p);state=r.state;reports.push(r.report);
+  for(const name of ["revenue","sold","missed","expired","received","discounted","profit"])
+   output[name]+=r.report[name];
+  for(const [id,d] of Object.entries(r.report.byProduct)){
+   const aggregate=output.byProduct[id]||(output.byProduct[id]={...d,order:0,demanded:0,sold:0,expired:0,discounted:0,revenue:0,missedSales:0});
+   for(const key of ["order","demanded","sold","expired","discounted","revenue","missedSales"])
+    aggregate[key]+=d[key]||0;
+   aggregate.remaining=d.remaining;
+  }
+  output.events.push(...r.report.events);
+  output.daysProcessed++;
+  if(r.report.closedMonth){output.closedMonth=true;break;}
+ }
+ output.events=output.events.slice(-10);
+ output.day=reports[0].day;output.month=reports[0].month;
+ output.costs={expense:reports.reduce((sum,r)=>sum+r.costs.expense,0),
+  procurement:reports.reduce((sum,r)=>sum+r.costs.procurement,0)};
+ output.events.unshift(output.daysProcessed+"営業日分を一括処理しました。入庫・借入・投資は初日に1回だけ実行しました。");
+ return {state,report:output};
+}
+return Object.freeze({DAYS,AUTO_FEE,LIFE,MAX_STOCK,start,restore,defaultPlan,quote,advance,advanceDays});
 });
