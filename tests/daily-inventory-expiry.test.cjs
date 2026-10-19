@@ -80,3 +80,29 @@ test("30 daily ticks close exactly one month and preserve safe saved history",()
  assert.equal(s.month,2);assert.equal(s.history.length,1);
  assert.equal(s.daily.day,1);assert.deepEqual(D.restore(s,s.daily),s);
 });
+
+test("7-day batching purchases and financing apply only on day one, month end is hard stop",()=>{
+ let start=D.start(E.initial(415)),p=plan(start);
+ p.products.coffee.order=150;p.products.coffee.discount=20;p.borrow=200000;
+ const fast=D.advanceDays(start,p,7);
+ let manual=start,day=0,first=plan(manual);
+ for(;day<7;day++){
+  const current=JSON.parse(JSON.stringify(p));
+  if(day){current.products.coffee.order=0;current.borrow=0;current.repay=0;
+   current.unlockSandwich=false;current.equipmentUpgrade=false;current.qualityUpgrade=false;current.staffTraining=false;}
+  manual=D.advance(manual,current).state;
+ }
+ assert.deepEqual(fast.state,manual);
+ assert.equal(fast.report.daysProcessed,7);
+ assert.equal(fast.report.received,150);
+ assert.equal(fast.state.debt,200000);
+ assert.equal(start.month,1);
+ // A batch cannot continue past the end of a month.
+ let near=D.start(E.initial(29));
+ for(let i=0;i<28;i++)near=D.advance(near,plan(near)).state;
+ const close=D.advanceDays(near,plan(near),7);
+ assert.equal(close.report.daysProcessed,2);
+ assert.equal(close.state.month,2);
+ assert.equal(close.state.daily.day,1);
+ assert.equal(close.state.history.length,1);
+});
