@@ -18,6 +18,13 @@ jobs:
           node-version: "22"
       - name: Confirm deterministic game and screenshot helper source tests
         run: npm test
+      - name: Parse unified seven-game Windows QA PowerShell script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $env:GITHUB_WORKSPACE 'scripts/run-seven-game-windows-qa.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
       - name: Capture actual Windows Edge tabs at two viewport sizes
         shell: pwsh
         run: |
