@@ -83,7 +83,7 @@ function showHistory(){const root=$("history");root.replaceChildren();
 }
 function results(){
  const root=$("results");root.replaceChildren();
- if(!latest){root.append(element("p",daily()?"在庫・値引き・入庫を決めて1日進めてください。":"価格・仕入・運営を決めて1か月進めてください。","muted"));return;}
+ if(!latest){$("deliveryBelt").hidden=true;$("deliveryBelt").dataset.active="false";root.append(element("p",daily()?"在庫・値引き・入庫を決めて1日進めてください。":"価格・仕入・運営を決めて1か月進めてください。","muted"));return;}
  const grid=element("div",undefined,"result-grid");
  const metrics=[["売上",yen(latest.revenue)],["営業利益",yen(latest.profit)],["販売数",latest.sold+"個"],["販売機会の損失",latest.missed+"個"]];
  if(daily())metrics.push(["期限切れ廃棄",latest.expired+"個"],["値引き販売",latest.discounted+"個"],["本日の入庫",latest.received+"個"]);
@@ -137,8 +137,12 @@ function advance(horizon=1){
   state=output.state;latest=output.report;
   notice=latest.profit>=0?"営業を完了しました。次の値付けと入庫を決めてください。":"赤字です。仕入・値引き・費用を確認してください。";
   persist();redraw();
-  $("deliveryBelt").dataset.active=String(wasDaily&&latest.received>0);
-  $("deliveryBelt").setAttribute("aria-label",wasDaily&&latest.received>0?"本日"+latest.received+"個入庫しました":"今回の入庫はありません");
+  const received=wasDaily?latest.received:0;
+  $("deliveryBelt").hidden=received===0;
+  $("deliveryBelt").dataset.active=String(received>0);
+  $("deliveryBelt").setAttribute("aria-label",received>0?"今回の入庫数 "+received+"個":"入庫なし");
+  $("deliveryReceipt").textContent=received>0?
+    "この営業処理で"+received+"個を入庫しました。入庫費は営業前の現金から支払済みです。":"入庫はありません。";
   window.OperationTabs?.open("run");
   $("results").scrollIntoView({block:"nearest",behavior:"smooth"});
  }catch(e){notice=e.message;renderStats();preflight();}
@@ -155,7 +159,7 @@ async function importSave(file){if(!file)return;try{if(file.size>400000)throw Er
 function init(){
  state=load();if(!recoveryBlocked)persist();redraw();
  document.addEventListener("input",event=>{if(event.target.matches("input,select"))preflight();});
- document.addEventListener("change",event=>{if(event.target.id==="unlockSandwich")showSandwich();if(event.target.matches("input"))preflight();});
+ document.addEventListener("change",event=>{if(event.target.id==="unlockSandwich")showSandwich();if(event.target.matches("input,select"))preflight();});
  $("advance").addEventListener("click",()=>{if(!recoveryBlocked)advance();});
  $("batchDays").addEventListener("click",()=>{if(!recoveryBlocked&&daily()&&confirm("最大7営業日を同じ設定で進めます。仕入・借入・設備投資は初日に一度だけ行い、月末で停止します。続けますか？"))advance(7);});
  $("migrateDaily").addEventListener("click",()=>{
