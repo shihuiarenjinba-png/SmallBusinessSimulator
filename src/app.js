@@ -156,6 +156,14 @@ async function importSave(file){if(!file)return;try{if(file.size>400000)throw Er
  if(!confirm("現在の進行を、このセーブに置き換えますか？"))return;
  state=next;recoveryBlocked=false;corruptRaw=null;latest=null;notice="セーブを復元しました。";persist();redraw();
  }catch(e){alert("セーブ読込失敗："+e.message);}}
+function protectLegacyBackup(raw){
+ if(raw===null)throw Error("旧セーブの原本が見つかりません。先にセーブを書き出してください。");
+ const older=localStorage.getItem(BACKUP);
+ if(older!==null&&older!==raw)
+  throw Error("以前の旧セーブのバックアップを上書きできません。先に元セーブをJSONへ書き出し、バックアップの保持方法を確認してください。");
+ if(older===null)localStorage.setItem(BACKUP,raw);
+ return true;
+}
 function init(){
  state=load();if(!recoveryBlocked)persist();redraw();
  document.addEventListener("input",event=>{if(event.target.matches("input,select"))preflight();});
@@ -166,8 +174,9 @@ function init(){
   if(recoveryBlocked||daily())return;
   if(!confirm("旧月次セーブを別領域に保護して、日次の入庫・値引き管理へ切り替えますか？現在庫は新しく入庫したものとして期限を設定します。"))return;
   try{
-   const raw=localStorage.getItem(KEY);if(raw!==null)localStorage.setItem(BACKUP,raw);
-   const candidate=D.start(state);
+   const raw=localStorage.getItem(KEY);
+   const candidate=D.start(state); // validate conversion before editing any storage key
+   protectLegacyBackup(raw);
    localStorage.setItem(KEY,JSON.stringify(candidate));state=candidate;latest=null;
    notice="旧セーブをバックアップし、日次営業に切り替えました。";redraw();
   }catch(e){notice=e.message;renderStats();}
