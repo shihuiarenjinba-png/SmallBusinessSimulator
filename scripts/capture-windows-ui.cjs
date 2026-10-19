@@ -112,7 +112,7 @@ async function main(){
      const state=await send("Runtime.evaluate",{expression,returnByValue:true});
      if(!state.result?.value)throw Error("Tab not found: "+tabs[i]);
      const inspected=state.result.value;
-     if(!inspected.activeTabIsSelected||inspected.visibleTargetCount<1||inspected.wrongVisibleCount>0)
+     if(!inspected.activeTabIsSelected||inspected.visibleTargetCount<1||inspected.wrongVisibleCount>0||inspected.horizontalOverflow)
       errors.push({kind:"tab-screen-mismatch",tab:tabs[i],width,height,inspection:inspected});
      await nap(320);
      const capture=await send("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
