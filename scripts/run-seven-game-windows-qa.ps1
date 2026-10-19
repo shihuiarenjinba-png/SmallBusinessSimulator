@@ -41,7 +41,7 @@ foreach($name in $Expected.Keys){
   if($branch -ne $Expected[$name]){throw "Unexpected branch '$branch'. Required: '$($Expected[$name])'"}
   $item.headSha=(& git -C $directory rev-parse HEAD).Trim()
   if($LASTEXITCODE -ne 0){throw "Cannot read commit SHA"}
-  $dirty=(& git -C $directory status --porcelain).Trim()
+  $dirty=(@(& git -C $directory status --porcelain) -join "`n").Trim()
   if($LASTEXITCODE -ne 0){throw "Cannot check working tree"}
   $item.workingTreeClean=($dirty.Length -eq 0)
   if(-not $item.workingTreeClean){throw "Uncommitted changes detected; not validating a reproducible commit"}
