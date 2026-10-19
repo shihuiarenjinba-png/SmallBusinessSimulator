@@ -132,7 +132,7 @@ async function main(){
   type:"initial-tab screenshot with tab/screen visibility assertions; not active-game or MSIX validation",
   results,errors:errors.concat(runtimeErrors)
  },null,2));
- console.log("Saved "+results.length+" images; "+errors.length+" errors; "+output);
- if(errors.length)process.exitCode=1;
+ console.log("Saved "+results.length+" images; "+(errors.length+runtimeErrors.length)+" errors; "+output);
+ if(errors.length||runtimeErrors.length)process.exitCode=1;
 }
 main().catch(e=>{console.error("UI capture: "+e);process.exitCode=1;});
