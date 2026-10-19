@@ -64,6 +64,7 @@ function populate(){const p=daily()?D.defaultPlan(state):E.defaultPlan(state);$(
  $("monthActionTitle").textContent=daily()?"本日のお店を営業する":"この計画で1か月営業する";
  $("monthActionDescription").textContent=daily()?"毎日入庫・値付け・賞味期限を確認できます。30営業日で1か月決算です。":"売上と利益、売れ残りを確認して次の手を考えましょう。";
  $("advance").textContent=daily()?"この計画で1営業日進める →":"この計画で1か月進める →";
+ $("batchDays").hidden=!daily();
  $("borrow").value="0";$("repay").value="0";$("equipmentUpgrade").checked=false;$("qualityUpgrade").checked=false;$("staffTraining").checked=false;$("staffTraining").disabled=state.month<6||state.staffSkill>=4||state.employees<1;
  products();}
 function renderStats(){
@@ -130,9 +131,9 @@ function preflight(){
  }catch(e){$("preflight").textContent=e.message;$("advance").disabled=true;}
 }
 function redraw(){renderStats();populate();showHistory();results();preflight();}
-function advance(){
+function advance(horizon=1){
  try{
-  const wasDaily=daily(),output=wasDaily?D.advance(state,plan()):E.nextMonth(state,plan());
+  const wasDaily=daily(),output=wasDaily?(horizon>1?D.advanceDays(state,plan(),horizon):D.advance(state,plan())):E.nextMonth(state,plan());
   state=output.state;latest=output.report;
   notice=latest.profit>=0?"営業を完了しました。次の値付けと入庫を決めてください。":"赤字です。仕入・値引き・費用を確認してください。";
   persist();redraw();
@@ -156,6 +157,7 @@ function init(){
  document.addEventListener("input",event=>{if(event.target.matches("input,select"))preflight();});
  document.addEventListener("change",event=>{if(event.target.id==="unlockSandwich")showSandwich();if(event.target.matches("input"))preflight();});
  $("advance").addEventListener("click",()=>{if(!recoveryBlocked)advance();});
+ $("batchDays").addEventListener("click",()=>{if(!recoveryBlocked&&daily()&&confirm("最大7営業日を同じ設定で進めます。仕入・借入・設備投資は初日に一度だけ行い、月末で停止します。続けますか？"))advance(7);});
  $("migrateDaily").addEventListener("click",()=>{
   if(recoveryBlocked||daily())return;
   if(!confirm("旧月次セーブを別領域に保護して、日次の入庫・値引き管理へ切り替えますか？現在庫は新しく入庫したものとして期限を設定します。"))return;
