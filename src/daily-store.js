@@ -75,7 +75,13 @@ function validatePlan(s,p){
   borrow:integer(p.borrow,"新規借入",0,E.RULES.loanLimit),
   repay:integer(p.repay,"返済額",0,E.RULES.loanLimit),
   automation:p.automation===true,threshold:integer(p.threshold,"期限前自動値引き日",1,14),
-  percent:integer(p.percent,"自動値引率",0,90),unlockSandwich:p.unlockSandwich===true};
+  percent:integer(p.percent,"自動値引率",0,90),unlockSandwich:p.unlockSandwich===true,
+ equipmentUpgrade:p.equipmentUpgrade===true,qualityUpgrade:p.qualityUpgrade===true,
+ staffTraining:p.staffTraining===true};
+ if(q.equipmentUpgrade&&s.equipment>=6||q.qualityUpgrade&&s.quality>=6)
+  throw Error("設備または品質の上限に達しています。");
+ if(q.staffTraining&&(s.month<6||s.staffSkill>=4||q.employees<1))
+  throw Error("従業員研修は6か月目以降、従業員1人以上で利用できます。");
  if(s.debt+q.borrow-q.repay<0||s.debt+q.borrow-q.repay>E.RULES.loanLimit)
   throw Error("借入・返済額が許容範囲外です。");
  if(q.unlockSandwich&&(s.month<4||s.sandwichUnlocked))
@@ -98,10 +104,14 @@ function quote(raw,p){
  const unlock=q.unlockSandwich?monthly.sandwichLicense:0;
  const procurement=IDS.reduce((a,id)=>a+q.products[id].order*E.CATALOG[id].unitCost,0);
  const automationFee=q.automation&&!s.daily.automationPaid?AUTO_FEE:0;
- const expense=hiring+wages+rent+interest+unlock+procurement+automationFee+q.advertising+q.repay;
+ const equipment=q.equipmentUpgrade?monthly.equipmentCost:0;
+ const quality=q.qualityUpgrade?monthly.qualityCost:0;
+ const training=q.staffTraining?monthly.trainingCost:0;
+ const expense=hiring+wages+rent+interest+unlock+procurement+automationFee+
+  equipment+quality+training+q.advertising+q.repay;
  if(expense>s.cash+q.borrow)
    throw Error("本日の入庫・運営費に必要な資金が足りません。仕入数または支出を減らしてください。");
- return {hiring,wages,rent,interest,unlock,procurement,automationFee,advertising:q.advertising,
+ return {hiring,wages,rent,interest,unlock,procurement,automationFee,equipment,quality,training,advertising:q.advertising,
   repay:q.repay,borrow:q.borrow,debt,expense,remaining:s.cash+q.borrow-expense};
 }
 function dayDemand(s,id,price,advertising){
@@ -114,6 +124,9 @@ function advance(raw,plan){
  const p=validatePlan(s,plan),costs=quote(s,p),result=copy(s),day=s.daily.day;
  const d=result.daily;
  result.cash=costs.remaining;result.debt=costs.debt;result.employees=p.employees;
+ result.equipment+=Number(p.equipmentUpgrade);
+ result.quality+=Number(p.qualityUpgrade);
+ result.staffSkill+=Number(p.staffTraining);
  if(p.unlockSandwich)result.sandwichUnlocked=true;
  d.policy={enabled:p.automation,threshold:p.threshold,percent:p.percent};
  d.automationPaid=d.automationPaid||p.automation;
@@ -163,7 +176,7 @@ function advance(raw,plan){
  const lostCost=IDS.reduce((sum,id)=>sum+(report.byProduct[id]?.expired||0)*E.CATALOG[id].unitCost,0);
  report.costs.costOfGoodsSold=cogs;report.costs.expiredCost=lostCost;
  report.profit=report.revenue-cogs-lostCost-costs.hiring-costs.wages-costs.rent-
-  costs.interest-costs.advertising-costs.automationFee;
+  costs.interest-costs.advertising-costs.automationFee-costs.training;
  const totals=d.totals;
  for(const field of Object.keys(totals))totals[field]+=report[field]||0;
  if(report.expired)report.events.push("賞味期限を過ぎた "+report.expired+"個を廃棄しました。");
