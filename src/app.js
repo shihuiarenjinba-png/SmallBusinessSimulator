@@ -1,22 +1,27 @@
 /* Readable, offline store UI. Keep private models out of the player-facing screen. */
 (function(){"use strict";
-const E=globalThis.SmallBusinessEconomy,$=id=>document.getElementById(id),KEY="small-business-simulator-v1";
+const E=globalThis.SmallBusinessEconomy,D=globalThis.SmallBusinessDaily,$=id=>document.getElementById(id),KEY="small-business-simulator-v1",BACKUP="small-business-before-daily-v1";
 let state=null,corruptRaw=null,recoveryBlocked=false,latest=null,notice="";
+const daily=()=>!!state?.daily;
 const yen=n=>Math.round(n).toLocaleString("ja-JP")+"円";
 function element(tag,text,className){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(className)e.className=className;return e;}
-function load(){let raw=null;try{raw=localStorage.getItem(KEY);return raw?E.validateState(JSON.parse(raw)):E.createInitialState();}
+function load(){let raw=null;try{raw=localStorage.getItem(KEY);if(!raw)return D.start(E.createInitialState());
+ const value=JSON.parse(raw),base=E.validateState(value);
+ return value.daily?D.restore(base,value.daily):base;}
  catch(e){recoveryBlocked=true;corruptRaw=raw;notice="保存記録を読み込めません。元のデータを保護しています。";return E.createInitialState();}}
 function persist(){if(recoveryBlocked)return false;try{localStorage.setItem(KEY,JSON.stringify(state));return true;}
  catch(e){notice="自動保存できませんでした。セーブを書き出してください。";return false;}}
 function numeric(id){const v=$(id).value.trim();if(!/^[0-9]+$/.test(v))throw Error("数値は0以上の整数で入力してください。");const n=Number(v);if(!Number.isSafeInteger(n))throw Error("数値が大きすぎます。");return n;}
 function plan(){return {products:{
-  coffee:{price:numeric("coffeePrice"),order:numeric("coffeeOrder")},
-  sandwich:{price:numeric("sandwichPrice"),order:numeric("sandwichOrder")}},
+  coffee:{price:numeric("coffeePrice"),order:numeric("coffeeOrder"),discount:daily()?numeric("coffeeDiscount"):0},
+  sandwich:{price:numeric("sandwichPrice"),order:numeric("sandwichOrder"),discount:daily()?numeric("sandwichDiscount"):0}},
  employees:numeric("employees"),advertising:numeric("advertising"),
  borrow:numeric("borrow"),repay:numeric("repay"),
  equipmentUpgrade:$("equipmentUpgrade").checked,
  qualityUpgrade:$("qualityUpgrade").checked,staffTraining:$("staffTraining").checked,
- unlockSandwich:$("unlockSandwich").checked};}
+ unlockSandwich:$("unlockSandwich").checked,
+ automation:daily()&&$("autoDiscount").checked,
+ threshold:daily()?numeric("autoDays"):2,percent:daily()?numeric("autoPercent"):20};}
 function makeField(id,label,value,min,max){
  const holder=element("label",label);const input=element("input");
  input.id=id;input.type="number";input.min=String(min);input.max=String(max);input.step="1";input.value=String(value);
@@ -28,8 +33,20 @@ function products(){
    const card=element("div",undefined,"product");card.id=id+"Card";
    card.append(element("h3",item.name),element("p","原価 "+yen(item.unitCost)+" / 個 ｜ 前月までの在庫 "+state.products[id].inventory+"個","muted"));
    const inputs=element("div",undefined,"controls");
-   inputs.append(makeField(id+"Price","店頭の販売価格（円）",state.products[id].price,1,E.RULES.maxPrice));
-   inputs.append(makeField(id+"Order","今月の仕入数（個）",id==="coffee"?700:0,0,E.RULES.maxPurchase));
+   inputs.append(makeField(id+"Price","通常販売価格（円）",state.products[id].price,1,E.RULES.maxPrice));
+   inputs.append(makeField(id+"Order",daily()?"本日入庫する数量（個）":"今月の仕入数（個）",
+  daily()?0:(id==="coffee"?700:0),0,daily()?D.MAX_STOCK:E.RULES.maxPurchase));
+   if(daily()){
+    const label=element("label","今日だけの一括値引き");
+    const picker=element("select");picker.id=id+"Discount";
+    for(const [pct,name] of [[0,"値引きなし"],[20,"20％オフ"],[50,"半額（50％オフ）"]]){
+      const option=element("option",name);option.value=String(pct);picker.append(option);
+    }
+    label.append(picker);inputs.append(label);
+    const ending=state.daily.lots[id].filter(l=>l.days<=2).reduce((a,l)=>a+l.qty,0);
+    card.append(element("p","現在庫 "+state.products[id].inventory+"個 ｜ 残り2日以内の在庫 "+ending+
+      "個 ｜ 参考保存期間 "+D.LIFE[id]+"営業日","muted"));
+   }
    card.append(inputs);
    const forecast=element("p",undefined,"forecast");forecast.id=id+"Forecast";const bars=element("div",undefined,"demand-bars");bars.id=id+"DemandBars";card.append(forecast,bars);dest.append(card);
  }
@@ -38,13 +55,23 @@ function products(){
  showSandwich();
 }
 function showSandwich(){const enabled=state.sandwichUnlocked||$("unlockSandwich").checked;$("sandwichCard").hidden=!enabled;}
-function populate(){const p=E.defaultPlan(state);$("employees").value=String(p.employees);$("advertising").value=String(p.advertising);
+function populate(){const p=daily()?D.defaultPlan(state):E.defaultPlan(state);$("employees").value=String(p.employees);$("advertising").value=String(p.advertising);
+ $("advertisingLabel").textContent=daily()?"本日の広告費（円）":"今月の広告費（円）";
+ $("autoDiscount").checked=daily()?state.daily.policy.enabled:false;
+ $("autoDays").value=daily()?String(state.daily.policy.threshold):"2";
+ $("autoPercent").value=daily()?String(state.daily.policy.percent):"20";
+ $("autoDiscountBox").hidden=!daily();$("dailyView").hidden=!daily();$("dailyMigration").hidden=daily();
+ $("monthActionTitle").textContent=daily()?"本日のお店を営業する":"この計画で1か月営業する";
+ $("monthActionDescription").textContent=daily()?"毎日入庫・値付け・賞味期限を確認できます。30営業日で1か月決算です。":"売上と利益、売れ残りを確認して次の手を考えましょう。";
+ $("advance").textContent=daily()?"この計画で1営業日進める →":"この計画で1か月進める →";
  $("borrow").value="0";$("repay").value="0";$("equipmentUpgrade").checked=false;$("qualityUpgrade").checked=false;$("staffTraining").checked=false;$("staffTraining").disabled=state.month<6||state.staffSkill>=4||state.employees<1;
  products();}
 function renderStats(){
  $("month").textContent=state.month>120?"完走":state.month+"か月目";
  $("cash").textContent=yen(state.cash);$("debt").textContent=yen(state.debt);$("headcount").textContent=state.employees+"人";
  $("staffProgress").textContent="従業員育成 "+state.staffSkill+" / 4 ｜ 研修は6か月目から（85,000円）";
+ $("dailyView").textContent=daily()?state.month+"か月目・第"+state.daily.day+
+ "営業日 / 30日｜入庫と値引きは日ごとに変更可能｜自動値引き利用料はゲーム内 "+yen(D.AUTO_FEE)+" / 月":"";
  $("message").textContent=notice|| (state.month<=3?"まずは商品の価格と仕入れを決めましょう。":
    state.month===4&&!state.sandwichUnlocked?"新しい商品を扱うか、お店を磨くかを選びましょう。":
    "価格・仕入・人員を調整しながら成長を目指しましょう。");
