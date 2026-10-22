@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "productTitle": "小規模経営 (Small Business Simulator)",
+  "repository": "shihuiarenjinba-png/SmallBusinessSimulator",
+  "storeId": "9NQSLD3GBD47",
+  "identityName": "OkinawaDesktopTools.SmallBusinessSimulator",
+  "publisher": "CN=46263F21-A700-41DB-8C9B-114C22FB82FC",
+  "publisherDisplayName": "Okinawa Desktop Tools",
+  "packageFamilyName": "OkinawaDesktopTools.SmallBusinessSimulator_j8yefg9jgfh58",
+  "packageSid": "S-1-15-2-480070252-1443018379-3801671384-2459557241-2637818202-875293902-2822372442",
+  "partnerCenterStatus": "IDENTITY_VALUES_SUPPLIED_BY_OWNER; submission/lifecycle status not rechecked",
+  "partnerCenterStatusVerifiedAt": null,
+  "storeDeepLink": null,
+  "webStoreUrl": null,
+  "storeLinksNote": "Available after the product is live (per pasted Partner Center view)",
+  "storeListingLanguages": "UNCONFIRMED",
+  "applicationLanguages": "UNCONFIRMED",
+  "formalStoreMsix": {
+    "status": "NOT_CONFIRMED; last recorded handoff said formal Store MSIX was not generated and only DEV-TEST was known. Do not upload DEV-TEST.",
+    "path": null,
+    "sha256": null
+  },
+  "verificationSource": "Owner-provided Partner Center product identity fields in chat, 2026-10-22",
+  "storeSubmission": "HOLD",
+  "notes": "The pasted values used the HTML entity &#x20; suffix. Identifier tokens are stored without trailing whitespace; compare the exact current Partner Center identity against AppxManifest before building/uploading. Do not infer language support, package existence, certification, or live status from Store ID alone. NOT_CONFIRMED; last recorded handoff said formal Store MSIX was not generated and only DEV-TEST was known. Do not upload DEV-TEST.",
+  "sourceNotes": "NOT_CONFIRMED; last recorded handoff said formal Store MSIX was not generated and only DEV-TEST was known. Do not upload DEV-TEST."
+}
