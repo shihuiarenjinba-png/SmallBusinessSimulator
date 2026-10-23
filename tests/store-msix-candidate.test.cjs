@@ -11,7 +11,7 @@ test("Store Version validation rejects malformed values and nonzero revision",()
 test("candidate mode uses exactly the canonical product identity but does not claim commercial approval",()=>{
  // Prepare the non-destructive review-only logo assets so this test is independent of workflow step order.
  icons.run();
- const env={STORE_BUILD_MODE:"CANDIDATE",STORE_ID:record.storeId,STORE_IDENTITY_NAME:record.identityName,STORE_PUBLISHER:record.publisher,STORE_PUBLISHER_DISPLAY_NAME:record.publisherDisplayName,STORE_DISPLAY_NAME:record.storeDisplayName,SOURCE_GIT_COMMIT:"0123456789abcdef0123456789abcdef01234567",STORE_IDENTITY_CONFIRMED:"OWNER_APPROVED",STORE_BRAND_APPROVED:"CANDIDATE_ONLY",STORE_PACKAGE_VERSION_APPROVED:"CANDIDATE_ONLY",STORE_PACKAGE_VERSION:"1.0.0.0"};
+ const env={STORE_BUILD_MODE:"CANDIDATE",STORE_ID:record.storeId,STORE_IDENTITY_NAME:record.identityName,STORE_PUBLISHER:record.publisher,STORE_PUBLISHER_DISPLAY_NAME:record.publisherDisplayName,STORE_DISPLAY_NAME:record.storeDisplayName,STORE_SOURCE_COMMIT:"0123456789abcdef0123456789abcdef01234567",STORE_IDENTITY_CONFIRMED:"OWNER_APPROVED",STORE_BRAND_APPROVED:"CANDIDATE_ONLY",STORE_PACKAGE_VERSION_APPROVED:"CANDIDATE_ONLY",STORE_PACKAGE_VERSION:"1.0.0.0"};
  assert.deepEqual(msix.gate(env,"win32",msix.builderVersion),[]);
  const formal=msix.gate({...env,STORE_BUILD_MODE:undefined},"win32",msix.builderVersion).join("\n");
  assert.match(formal,/STORE_BRAND_APPROVED/);assert.match(formal,/STORE_PACKAGE_VERSION_APPROVED/);assert.match(formal,/STORE_IDENTITY_CONFIRMED|Identityの確認値/);
@@ -21,7 +21,7 @@ test("configuration reads Identity from the canonical JSON and targets x64 MSIX 
  const c=msix.makeConfig({STORE_PACKAGE_VERSION:"1.0.0.0"});
  assert.equal(c.msix.identityName,record.identityName);assert.equal(c.msix.publisher,record.publisher);assert.equal(c.msix.publisherDisplayName,record.publisherDisplayName);
  assert.equal(c.msix.displayName,record.storeDisplayName);assert.deepEqual(c.msix.languages,["ja-JP"]);assert.deepEqual(c.win.target,[{target:"msix",arch:["x64"]}]);
- assert.deepEqual(c.extraResources,[{from:"build/store-build-meta/SOURCE_GIT_COMMIT.txt",to:"SOURCE_GIT_COMMIT.txt"}]);
+ assert.deepEqual(c.extraResources,[{from:"store/SOURCE_GIT_COMMIT.txt",to:"SOURCE_GIT_COMMIT.txt"}]);
  assert.equal(c.appxManifestCreated,"./scripts/store-msix-manifest-hook.cjs");
 });
 test("candidate icon generation is deterministic and has Store-required dimensions",()=>{
@@ -44,4 +44,9 @@ test("PowerShell verifier parses successfully on Windows",()=>{
  const command="$tokens=$null;$errors=$null;[System.Management.Automation.Language.Parser]::ParseFile('"+file.replace(/'/g,"''")+"',[ref]$tokens,[ref]$errors)|Out-Null;if($errors.Count){$errors|ForEach-Object{Write-Error $_};exit 1}";
  const r=spawnSync("powershell.exe",["-NoProfile","-Command",command],{encoding:"utf8"});
  assert.equal(r.status,0,(r.stderr||r.stdout||"PowerShell parser failed"));
+});
+
+test("sale-facing HTML contains no internal development/HOLD markers",()=>{
+ const html=require("node:fs").readFileSync(require("node:path").join(__dirname,"../index.html"),"utf8");
+ assert.doesNotMatch(html,/販売HOLD|開発版|development candidate|developer candidate|DEV-TEST|DEBUG|TODO/i);
 });
