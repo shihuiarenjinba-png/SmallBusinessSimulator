@@ -1,0 +1,40 @@
+name: Windows Edge screen QA (source, not Store package)
+on:
+  push:
+    branches: ["qa/seven-game-screen-state-audit-20261019"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-edge:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Confirm deterministic game and screenshot helper source tests
+        run: npm test
+      - name: Parse unified seven-game Windows QA PowerShell script
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $env:GITHUB_WORKSPACE 'scripts/run-seven-game-windows-qa.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+      - name: Capture actual Windows Edge tabs at two viewport sizes
+        shell: pwsh
+        run: |
+          node scripts/capture-windows-ui.cjs "$env:GITHUB_WORKSPACE" "$env:RUNNER_TEMP\SmallBusinessSimulator-screens"
+          exit $LASTEXITCODE
+      - name: Preserve screenshots and tab/visibility error manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmallBusinessSimulator-Windows-Edge-screen-QA
+          path: ${{ runner.temp }}/SmallBusinessSimulator-screens
+          retention-days: 14
+          if-no-files-found: warn

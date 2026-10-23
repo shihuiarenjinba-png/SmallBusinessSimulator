@@ -21,6 +21,11 @@ test("Edge capture helper is local-only, captures tab views, never clicks game d
   "FactoryInspectionSimulator","NightOfficeAuditor","game-stadium","game-new","finance-simulation"])
   assert.match(screen,new RegExp(project.replace(/[-]/g,"\\-")));
  assert.match(screen,/Page\.captureScreenshot/);
+ assert.match(screen,/activeTabIsSelected/);
+ assert.match(screen,/visibleTargetCount/);
+ assert.match(screen,/wrongVisibleCount/);
+ assert.match(screen,/Runtime\.exceptionThrown/);
+ assert.match(screen,/errors\.concat\(runtimeErrors\)/);
  assert.match(screen,/remote-debugging-port=0/);
  assert.match(screen,/edgeProcess\.kill\(\)/);
  assert.doesNotMatch(screen,/npm install|shell\.openExternal|https:\/\/|child_process\.exec\(/);
