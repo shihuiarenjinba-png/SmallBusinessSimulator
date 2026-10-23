@@ -36,3 +36,12 @@ test("Manifest hook rewrites only Version and checks both display-name fields",(
 });
 
 test("package metadata contains no internal development/HOLD wording",()=>{const pkg=require("../package.json");assert.doesNotMatch(pkg.description,/development|developer|candidate|HOLD/i);assert.equal(record.storeDisplayName,"Small Business Simulator");});
+
+test("PowerShell verifier parses successfully on Windows",()=>{
+ if(process.platform!=="win32")return;
+ const {spawnSync}=require("node:child_process");
+ const file=require("node:path").join(__dirname,"../scripts/verify-store-msix.ps1");
+ const command="$tokens=$null;$errors=$null;[System.Management.Automation.Language.Parser]::ParseFile('"+file.replace(/'/g,"''")+"',[ref]$tokens,[ref]$errors)|Out-Null;if($errors.Count){$errors|ForEach-Object{Write-Error $_};exit 1}";
+ const r=spawnSync("powershell.exe",["-NoProfile","-Command",command],{encoding:"utf8"});
+ assert.equal(r.status,0,(r.stderr||r.stdout||"PowerShell parser failed"));
+});
