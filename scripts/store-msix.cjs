@@ -4,7 +4,6 @@ const {spawnSync}=require("node:child_process");
 const record=require("../store/partner-center-identity.json");
 const root=path.resolve(__dirname,".."),builderVersion="27.0.0-alpha.10";
 const storeDisplayName=record.storeDisplayName||record.productTitle;
-const storeDisplayName=record.storeDisplayName||record.productTitle;
 const logos={"StoreLogo.png":[50,50],"Square44x44Logo.png":[44,44],"Square150x150Logo.png":[150,150],"Wide310x150Logo.png":[310,150]};
 function pngDimensions(file){const b=fs.readFileSync(file);if(b.length<33||b.subarray(0,8).toString("hex")!=="89504e470d0a1a0a"||b.toString("ascii",12,16)!=="IHDR")return null;return [b.readUInt32BE(16),b.readUInt32BE(20)];}
 function versionErrors(v){if(typeof v!=="string"||!/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(v))return ["STORE_PACKAGE_VERSION は4要素の十進数形式が必要です"];const a=v.split(".").map(Number),e=[];if(a.some(n=>!Number.isSafeInteger(n)||n>65535))e.push("Version各要素は0～65535の範囲で指定してください");if(a[0]===0)e.push("Store Package VersionのMajorは0以外にしてください");if(a[3]!==0)e.push("Store Package VersionのRevision（第4要素）は0にしてください");return e;}
@@ -17,8 +16,8 @@ function gate(env,platform=process.platform,installed= null){
  if(!candidate&&env.STORE_BRAND_APPROVED!=="YES")e.push("正式ビルドにはSTORE_BRAND_APPROVED=YESが必要です");
  if(!candidate&&env.STORE_PACKAGE_VERSION_APPROVED!=="YES")e.push("STORE_PACKAGE_VERSION_APPROVED=YES（所有者承認済みStore Version）が正式ビルドに必要です");
  e.push(...versionErrors(env.STORE_PACKAGE_VERSION));
- const sourceCommit=(env.SOURCE_GIT_COMMIT||env.GITHUB_SHA||"").trim();
- if(!/^[0-9a-f]{40}$/i.test(sourceCommit))e.push("SOURCE_GIT_COMMIT または GITHUB_SHA に40桁のSource commitが必要です");
+ const sourceCommit=(env.STORE_SOURCE_COMMIT||env.SOURCE_GIT_COMMIT||env.GITHUB_SHA||"").trim();
+ if(!/^[0-9a-f]{40}$/i.test(sourceCommit))e.push("STORE_SOURCE_COMMIT / SOURCE_GIT_COMMIT / GITHUB_SHA のいずれかに40桁のSource commitが必要です");
  let b=installed;try{if(b===null)b=JSON.parse(fs.readFileSync(path.join(root,"node_modules/electron-builder/package.json"),"utf8")).version;}catch{}
  if(b!==builderVersion)e.push("electron-builder "+builderVersion+" が必要です。共有依存は変更せず隔離ビルド環境を使用してください");
  for(const f of ["index.html","desktop/main.cjs","store/partner-center-identity.json"])if(!fs.existsSync(path.join(root,f)))e.push("必須ファイルがありません: "+f);
@@ -29,7 +28,6 @@ function makeConfig(env){const suffix=record.identityName.split(".").pop().repla
  appId:"com.okinawadesktoptools."+suffix,productName:storeDisplayName,asar:true,
  files:["index.html","*.css","*.js","src/**/*","desktop/main.cjs","package.json"],
  extraResources:[{from:"store/SOURCE_GIT_COMMIT.txt",to:"SOURCE_GIT_COMMIT.txt"}],
- extraResources:[{from:"build/store-build-meta/SOURCE_GIT_COMMIT.txt",to:"SOURCE_GIT_COMMIT.txt"}],
  directories:{output:"dist-msix-store-candidate",buildResources:"build"},
  toolsets:{winCodeSign:"1.1.0"},win:{target:[{target:"msix",arch:["x64"]}]},
  msix:{applicationId:suffix,identityName:record.identityName,publisher:record.publisher,publisherDisplayName:record.publisherDisplayName,displayName:storeDisplayName,languages:["ja-JP"],createMsixupload:true,setBuildNumber:false,capabilities:["runFullTrust"]},
