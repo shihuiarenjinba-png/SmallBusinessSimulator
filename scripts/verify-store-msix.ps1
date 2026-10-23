@@ -9,6 +9,7 @@ function Get-FileSha256Hex {
 
 $root = Split-Path -Parent $PSScriptRoot
 $record = Get-Content -LiteralPath (Join-Path $root "store/partner-center-identity.json") -Raw -Encoding UTF8 | ConvertFrom-Json
+$storeDisplayName = if ($record.storeDisplayName) { [string]$record.storeDisplayName } else { [string]$record.productTitle }
 $dir = Join-Path $root "dist-msix-store-candidate"
 if (-not (Test-Path -LiteralPath $dir)) { throw "MSIX output directory missing" }
 Add-Type -AssemblyName System.IO.Compression
@@ -27,6 +28,107 @@ try {
   if ([string]$identity.Name -cne [string]$record.identityName) { throw "Identity.Name mismatch" }
   if ([string]$identity.Publisher -cne [string]$record.publisher) { throw "Identity.Publisher mismatch" }
   if ([string]$identity.Version -cne [string]$env:STORE_PACKAGE_VERSION) { throw "Identity.Version mismatch" }
+  if ([string]$identity.Version -notmatch '^\d+\.\d+\.\d+\.0
+  $pdn = $manifest.SelectSingleNode("//*[local-name()='PublisherDisplayName']")
+  if (-not $pdn -or [string]$pdn.InnerText -cne [string]$record.publisherDisplayName) { throw "PublisherDisplayName mismatch" }
+  $propertiesName = $manifest.SelectSingleNode("//*[local-name()='Properties']/*[local-name()='DisplayName']")
+  $visualElements = @($manifest.SelectNodes("//*[local-name()='VisualElements']"))
+  if (-not $propertiesName -or [string]$propertiesName.InnerText -cne $storeDisplayName) { throw "Package/Properties/DisplayName differs from reserved Store display name" }
+  if ($visualElements.Count -ne 1 -or [string]$visualElements[0].GetAttribute("DisplayName") -cne $storeDisplayName) { throw "uap:VisualElements/@DisplayName differs from reserved Store display name" }
+  $resourceLanguages = @($manifest.SelectNodes("//*[local-name()='Resources']/*[local-name()='Resource']") | ForEach-Object { [string]$_.GetAttribute("Language") })
+  if ($resourceLanguages -notcontains "ja-JP") { throw "Manifest Resources must include ja-JP" }
+  $asarEntries = @($zip.Entries | Where-Object { $_.FullName -match '(^|/)app\.asar
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+) { throw "Identity.Version revision must be 0" }
+  if ([string]$identity.ProcessorArchitecture -cne "x64") { throw "ProcessorArchitecture is not x64" }
+  $pdn = $manifest.SelectSingleNode("//*[local-name()='PublisherDisplayName']")
+  if (-not $pdn -or [string]$pdn.InnerText -cne [string]$record.publisherDisplayName) { throw "PublisherDisplayName mismatch" }
+  $propertiesName = $manifest.SelectSingleNode("//*[local-name()='Properties']/*[local-name()='DisplayName']")
+  $visualElements = @($manifest.SelectNodes("//*[local-name()='VisualElements']"))
+  if (-not $propertiesName -or [string]$propertiesName.InnerText -cne [string]$record.productTitle) { throw "Package/Properties/DisplayName differs from recorded title" }
+  if ($visualElements.Count -ne 1 -or [string]$visualElements[0].GetAttribute("DisplayName") -cne [string]$record.productTitle) { throw "uap:VisualElements/@DisplayName differs from recorded title" }
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+ })
+  if ($asarEntries.Count -lt 1) { throw "app.asar missing from MSIX" }
+  $licenseEntries = @($zip.Entries | Where-Object { $_.FullName -match '(^|/)LICENSE\.electron\.txt
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+) { throw "Identity.Version revision must be 0" }
+  if ([string]$identity.ProcessorArchitecture -cne "x64") { throw "ProcessorArchitecture is not x64" }
+  $pdn = $manifest.SelectSingleNode("//*[local-name()='PublisherDisplayName']")
+  if (-not $pdn -or [string]$pdn.InnerText -cne [string]$record.publisherDisplayName) { throw "PublisherDisplayName mismatch" }
+  $propertiesName = $manifest.SelectSingleNode("//*[local-name()='Properties']/*[local-name()='DisplayName']")
+  $visualElements = @($manifest.SelectNodes("//*[local-name()='VisualElements']"))
+  if (-not $propertiesName -or [string]$propertiesName.InnerText -cne [string]$record.productTitle) { throw "Package/Properties/DisplayName differs from recorded title" }
+  if ($visualElements.Count -ne 1 -or [string]$visualElements[0].GetAttribute("DisplayName") -cne [string]$record.productTitle) { throw "uap:VisualElements/@DisplayName differs from recorded title" }
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+ })
+  if ($licenseEntries.Count -lt 1) { throw "LICENSE.electron.txt missing from MSIX" }
+  $commitEntries = @($zip.Entries | Where-Object { $_.FullName -match '(^|/)SOURCE_GIT_COMMIT\.txt
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+) { throw "Identity.Version revision must be 0" }
+  if ([string]$identity.ProcessorArchitecture -cne "x64") { throw "ProcessorArchitecture is not x64" }
+  $pdn = $manifest.SelectSingleNode("//*[local-name()='PublisherDisplayName']")
+  if (-not $pdn -or [string]$pdn.InnerText -cne [string]$record.publisherDisplayName) { throw "PublisherDisplayName mismatch" }
+  $propertiesName = $manifest.SelectSingleNode("//*[local-name()='Properties']/*[local-name()='DisplayName']")
+  $visualElements = @($manifest.SelectNodes("//*[local-name()='VisualElements']"))
+  if (-not $propertiesName -or [string]$propertiesName.InnerText -cne [string]$record.productTitle) { throw "Package/Properties/DisplayName differs from recorded title" }
+  if ($visualElements.Count -ne 1 -or [string]$visualElements[0].GetAttribute("DisplayName") -cne [string]$record.productTitle) { throw "uap:VisualElements/@DisplayName differs from recorded title" }
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+ })
+  if ($commitEntries.Count -ne 1) { throw "Expected exactly one SOURCE_GIT_COMMIT.txt in MSIX" }
+  $commitReader = New-Object System.IO.StreamReader($commitEntries[0].Open())
+  try { $embeddedCommit = $commitReader.ReadToEnd().Trim() } finally { $commitReader.Dispose() }
+  $expectedCommit = if ($env:SOURCE_GIT_COMMIT) { [string]$env:SOURCE_GIT_COMMIT } else { [string]$env:GITHUB_SHA }
+  if ($expectedCommit -notmatch '^[0-9a-fA-F]{40}
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+) { throw "Identity.Version revision must be 0" }
+  if ([string]$identity.ProcessorArchitecture -cne "x64") { throw "ProcessorArchitecture is not x64" }
+  $pdn = $manifest.SelectSingleNode("//*[local-name()='PublisherDisplayName']")
+  if (-not $pdn -or [string]$pdn.InnerText -cne [string]$record.publisherDisplayName) { throw "PublisherDisplayName mismatch" }
+  $propertiesName = $manifest.SelectSingleNode("//*[local-name()='Properties']/*[local-name()='DisplayName']")
+  $visualElements = @($manifest.SelectNodes("//*[local-name()='VisualElements']"))
+  if (-not $propertiesName -or [string]$propertiesName.InnerText -cne [string]$record.productTitle) { throw "Package/Properties/DisplayName differs from recorded title" }
+  if ($visualElements.Count -ne 1 -or [string]$visualElements[0].GetAttribute("DisplayName") -cne [string]$record.productTitle) { throw "uap:VisualElements/@DisplayName differs from recorded title" }
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+ -or $embeddedCommit -cne $expectedCommit) { throw "Embedded Source commit mismatch" }
+  Write-Host "MANIFEST_IDENTITY_PASS $($record.identityName) $($identity.Version) x64"
+  Write-Host ("MSIX_SHA256=" + (Get-FileSha256Hex -Path $packages[0].FullName))
+  Write-Host ("MSIXUPLOAD_SHA256=" + (Get-FileSha256Hex -Path $uploads[0].FullName))
+  Write-Host "Candidate only: live Partner Center acceptance, signed submission, WACK and Windows install/save/restore remain HOLD."
+} finally { $zip.Dispose() }
+) { throw "Identity.Version revision must be 0" }
   if ([string]$identity.ProcessorArchitecture -cne "x64") { throw "ProcessorArchitecture is not x64" }
   $pdn = $manifest.SelectSingleNode("//*[local-name()='PublisherDisplayName']")
   if (-not $pdn -or [string]$pdn.InnerText -cne [string]$record.publisherDisplayName) { throw "PublisherDisplayName mismatch" }

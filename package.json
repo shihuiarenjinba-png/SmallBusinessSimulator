@@ -2,7 +2,7 @@
   "name": "small-business-simulator",
   "version": "0.1.0",
   "private": true,
-  "description": "Offline economics and storefront management game (development candidate)",
+  "description": "Offline small business management simulation with pricing, inventory, staffing, financing, and local save data.",
   "scripts": {
     "test": "node --test tests/*.test.cjs",
     "build:msix": "node scripts/store-msix.cjs",
