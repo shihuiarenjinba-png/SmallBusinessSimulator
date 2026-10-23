@@ -2,6 +2,7 @@
 const fs=require("node:fs");
 const record=require("../store/partner-center-identity.json");
 const {versionErrors}=require("./store-msix.cjs");
+const storeDisplayName=record.storeDisplayName||record.productTitle;
 function storeName(identity){return identity.storeDisplayName||identity.productTitle;}
 function decode(v){return String(v).replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&#x([0-9a-f]+);/gi,(_,n)=>String.fromCodePoint(parseInt(n,16))).replace(/&#([0-9]+);/g,(_,n)=>String.fromCodePoint(parseInt(n,10))).replace(/&amp;/g,"&");}
 function attr(tag,n){const r=new RegExp('\\b'+n+'\\s*=\\s*([\\x22\\x27])(.*?)\\1','g'),m=Array.from(tag.matchAll(r));if(m.length!==1)throw new Error("Manifest attribute "+n+" must occur exactly once");return decode(m[0][2]);}
