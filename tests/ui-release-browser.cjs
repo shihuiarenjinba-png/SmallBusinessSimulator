@@ -19,13 +19,13 @@ const entry=url.pathToFileURL(path.resolve("index.html")).href;
   await p.locator('[data-operation-tab="run"]').click();
   assert.equal(await p.locator("#advance").isVisible(),true);
   await p.locator("#advance").click();
-  assert.match(await p.locator("#month").innerText(),/2/);
+  assert.match(await p.locator("#dailyView").innerText(),/第2営業日/);
   assert.match(await p.locator("#results").innerText(),/売上|利益/);
   await shot("02-1280-month-result.png");
   await p.reload();
-  assert.match(await p.locator("#month").innerText(),/2/);
+  assert.match(await p.locator("#dailyView").innerText(),/第2営業日/);
   await p.locator('[data-operation-tab="history"]').click();
-  assert.match(await p.locator("#history").innerText(),/売上/);
+  assert.match(await p.locator("#history").innerText(),/営業すると月次記録|売上/);
   await p.locator('[data-operation-tab="goods"]').click();
   await p.locator("#coffeePrice").fill("0");
   await p.locator('[data-operation-tab="run"]').click();
@@ -46,7 +46,7 @@ const entry=url.pathToFileURL(path.resolve("index.html")).href;
   for(const phrase of ["GitHub Actions","QA_UNSIGNED","Store Identity","WACK","MSIX","開発工程"]){
    assert.equal(player.includes(phrase),false,"pipeline content appeared: "+phrase);
   }
-  const record={result:"PASS",monthAdvanced:2,savedAndReloaded:true,inputValidation:true,gameStats:true,
+  const record={result:"PASS",dailyDayAdvanced:2,savedAndReloaded:true,inputValidation:true,gameStats:true,
    width1024NoOverflow:true,internalPipelineHidden:true,screenshots:4,startingCash:initial,pageErrors:errors,remoteRequests:remote,
    scope:"Chromium UI QA, not installed MSIX"};
   fs.writeFileSync(path.join(out,"UI_RELEASE_QA.json"),JSON.stringify(record,null,2)+"\n");
