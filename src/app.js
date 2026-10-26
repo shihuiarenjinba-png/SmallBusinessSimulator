@@ -154,7 +154,10 @@ async function importSave(file){if(!file)return;try{if(file.size>400000)throw Er
  if(data.schema!==E.VERSION)throw Error("保存形式が対応していません。");
  const base=E.validateState(data.state),next=data.state.daily?D.restore(base,data.state.daily):base;
  if(!confirm("現在の進行を、このセーブに置き換えますか？"))return;
- state=next;recoveryBlocked=false;corruptRaw=null;latest=null;notice="セーブを復元しました。";persist();redraw();
+ // Validate and persist the replacement before modifying the active game.
+ // If disk quota/access fails, the original game remains playable and intact.
+ localStorage.setItem(KEY,JSON.stringify(next));
+ state=next;recoveryBlocked=false;corruptRaw=null;latest=null;notice="セーブを復元しました。";redraw();
  }catch(e){alert("セーブ読込失敗："+e.message);}}
 function protectLegacyBackup(raw){
  if(raw===null)throw Error("旧セーブの原本が見つかりません。先にセーブを書き出してください。");
