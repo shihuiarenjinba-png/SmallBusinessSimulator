@@ -187,7 +187,13 @@ function init(){
  $("export").addEventListener("click",exportSave);$("import").addEventListener("click",()=>$("savefile").click());
  $("savefile").addEventListener("change",e=>{const f=e.target.files[0];e.target.value="";void importSave(f);});
  $("reset").addEventListener("click",()=>{if(!confirm(recoveryBlocked?"読込できない元の記録を上書きして新規開始します。先に元データを書き出しましたか？":"現在の進行を消して、初めから始めますか？"))return;
-   recoveryBlocked=false;corruptRaw=null;state=D.start(E.createInitialState());latest=null;notice="新しく始めました。";persist();redraw();});
+   try{
+     const next=D.start(E.createInitialState());
+     localStorage.setItem(KEY,JSON.stringify(next));
+     state=next;recoveryBlocked=false;corruptRaw=null;latest=null;
+     notice="新しく始めました。";redraw();
+   }catch(error){notice="保存領域に書き込めないため、以前の進行状況は変更しませんでした。";redraw();}
+ });
 }
 document.addEventListener("DOMContentLoaded",init);
 })();
