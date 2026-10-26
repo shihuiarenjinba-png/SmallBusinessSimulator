@@ -90,6 +90,16 @@ function results(){
  for(const [label,value] of metrics){
   const card=element("div",undefined,"result-cell");card.append(element("small",label),element("strong",value));grid.append(card);
  }root.append(grid);
+ const advice=latest.expired>0?
+   "次の一手：廃棄が発生しました。次回は入庫を少なめにするか、期限前の値引きを検討しましょう。":
+   latest.missed>latest.sold?
+   "次の一手：販売機会を逃しています。在庫数、価格、スタッフの販売能力を確認しましょう。":
+   latest.profit<0?
+   "次の一手：赤字が発生しました。仕入・広告・人件費と、実際に売れた数量を見比べましょう。":
+   latest.sold===0?
+   "次の一手：販売がありませんでした。値付けと需要予想、売場の在庫を確認しましょう。":
+   "次の一手：売上と利益を確認し、売れ筋商品の在庫と価格を少しずつ調整しましょう。";
+ root.append(element("p",advice,"result-note"));
  for(const detail of Object.values(latest.byProduct)){
   const line=daily()?
    detail.name+"：需要 "+detail.demanded+"個 / 販売 "+detail.sold+"個 / 入庫 "+detail.order+"個 / 残り "+detail.remaining+
@@ -134,9 +144,12 @@ function redraw(){renderStats();populate();showHistory();results();preflight();}
 function advance(horizon=1){
  try{
   const wasDaily=daily(),output=wasDaily?(horizon>1?D.advanceDays(state,plan(),horizon):D.advance(state,plan())):E.nextMonth(state,plan());
+  // Do not advance an unsaved month or inventory day in memory.
+  // The report is visible only after both its state and ledger are persisted.
+  localStorage.setItem(KEY,JSON.stringify(output.state));
   state=output.state;latest=output.report;
   notice=latest.profit>=0?"営業を完了しました。次の値付けと入庫を決めてください。":"赤字です。仕入・値引き・費用を確認してください。";
-  persist();redraw();
+  redraw();
   const received=wasDaily?latest.received:0;
   $("deliveryBelt").hidden=received===0;
   $("deliveryBelt").dataset.active=String(received>0);
